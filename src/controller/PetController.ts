@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import type TipoPet from "../tipos/TipoPet";
 import EnumEspecie, { parseEspecie } from "../enum/EnumEspecie";
+import PetRepositoy from "../repositories/petRepository";
+import PetEntity from "../entities/PetEntity";
 
 let listaDePets:Array<TipoPet> = []
 
@@ -13,9 +15,12 @@ function geraId() {
 
 
 export default class PetController{
+    constructor(private repository: PetRepositoy){
+     
+    }
     
     criaPet(req: Request, res: Response){
-        const {nome, adotado, especie, dataNascimento} = <TipoPet> req.body;
+        const {nome, adotado, especie, dataNascimento} = <PetEntity> req.body;
        
 
         const especieNormalizada = parseEspecie(especie)
@@ -30,8 +35,13 @@ export default class PetController{
             return res.status(409).json({mensagem: "Id já cadastrado!"})
         }
 
-        const novoPet:TipoPet = { id:geraId(), nome, adotado, especie,dataNascimento};
-        listaDePets.push(novoPet)
+        const novoPet = new PetEntity();
+         novoPet.id = geraId();
+          novoPet.nome = nome,
+          novoPet.adotado = adotado,
+          novoPet.especie = especie,
+          novoPet.dataNascimento = dataNascimento
+        this.repository.criaPet(novoPet)
         return res.status(201).json(novoPet)
     }
 
