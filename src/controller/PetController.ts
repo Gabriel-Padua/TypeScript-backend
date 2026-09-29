@@ -4,11 +4,18 @@ import EnumEspecie, { parseEspecie } from "../enum/EnumEspecie";
 
 let listaDePets:Array<TipoPet> = []
 
+let id = 0;
+function geraId() {
+  id = id + 1;
+  return id;
+}
+
+
 
 export default class PetController{
     
     criaPet(req: Request, res: Response){
-        const { id, nome, adotado, especie, idade} = <TipoPet> req.body;
+        const {nome, adotado, especie, dataNascimento} = <TipoPet> req.body;
        
 
         const especieNormalizada = parseEspecie(especie)
@@ -23,7 +30,7 @@ export default class PetController{
             return res.status(409).json({mensagem: "Id já cadastrado!"})
         }
 
-        const novoPet:TipoPet = { id, nome, adotado, especie,idade};
+        const novoPet:TipoPet = { id:geraId(), nome, adotado, especie,dataNascimento};
         listaDePets.push(novoPet)
         return res.status(201).json(novoPet)
     }
@@ -36,7 +43,7 @@ export default class PetController{
 
     atualizaPet(req: Request, res: Response){
         const { id } = req.params
-        const { adotado, especie, idade, nome } = req.body as TipoPet;
+        const { adotado, especie, dataNascimento, nome } = req.body as TipoPet;
         const pet = listaDePets.find((pet) => pet.id === Number(id))
 
         if(!pet) { 
@@ -44,7 +51,7 @@ export default class PetController{
         }
 
         pet.nome = nome;
-        pet.idade = idade;
+        pet.dataNascimento = dataNascimento;
         pet.especie = especie;
         pet.adotado= adotado;
 
