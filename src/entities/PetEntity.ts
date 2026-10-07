@@ -7,16 +7,23 @@ export default class PetEntity {
     id!:number;
 
     @Column()
-    nome!:string;
+    nome:string;
 
      @Column()
-    especie!: EnumEspecie;
+    especie: EnumEspecie;
 
      @Column()
-    dataNascimento!: Date;
+    dataNascimento: Date;
 
      @Column()
-    adotado!: boolean;
+    adotado: boolean;
 
+    constructor(nome:string, especie:EnumEspecie, dataNascimento: Date, adotado:boolean){
+
+        this.nome = nome
+        this.especie = especie
+        this.dataNascimento = dataNascimento
+        this.adotado = adotado
+    }
 
 };
