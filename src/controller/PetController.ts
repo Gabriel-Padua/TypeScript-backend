@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import type TipoPet from "../tipos/TipoPet";
 import EnumEspecie, { parseEspecie } from "../enum/EnumEspecie";
-import PetRepositoy from "../repositories/petRepository";
+import PetRepository from "../repositories/petRepository";
 import PetEntity from "../entities/PetEntity";
-
-let listaDePets:Array<TipoPet> = []
+import EnumPorte, { parsePorte } from "../enum/EnumPorte";
+let listaDePets: Array<TipoPet> = [];
 
 let id = 0;
 function geraId() {
@@ -12,64 +12,92 @@ function geraId() {
   return id;
 }
 
+export default class PetController {
+  constructor(private repository: PetRepository) {}
+  async criaPet(req: Request, res: Response) {
+    const { adotado, especie, dataNascimento, nome, porte } = <PetEntity>(
+      req.body
+    );
 
+    const especieFormatted = parseEspecie(especie);
+    const porteFormatted = porte ? parsePorte(porte) : undefined;
 
-export default class PetController{
-    constructor(private repository: PetRepositoy){
-     
-    }
-    
-    async criaPet(req: Request, res: Response){
-        const {nome, adotado, especie, dataNascimento} = <PetEntity> req.body;
-       
-
-        const especieNormalizada = parseEspecie(especie)
-
-        if(!especieNormalizada){
-            return res.status(400).json({error: "Especie inválida"})
-        }
-
-
-        const jaExiste = listaDePets.find((pet) => pet.id === Number(id))   
-        if(jaExiste){
-            return res.status(409).json({mensagem: "Id já cadastrado!"})
-        }
-
-        const novoPet = new PetEntity(nome,especie,dataNascimento,adotado);
-
-        await this.repository.criaPet(novoPet)
-        return res.status(201).json(novoPet)
+    if (
+      !especieFormatted ||
+      !Object.values(EnumEspecie).includes(especieFormatted)
+    ) {
+      return res.status(400).json({ error: "Especie inválida" });
     }
 
-
-        async listaPets(req: Request, res: Response){
-        const listaDePets = await this.repository.listaPet()
-        return res.status(200).json(listaDePets)
+    if (
+      porte &&
+      (!porteFormatted || !Object.values(EnumPorte).includes(porteFormatted))
+    ) {
+      return res.status(400).json({ error: "Porte inválida" });
     }
 
+    const novoPet = new PetEntity(
+      nome,
+      especie,
+      dataNascimento,
+      adotado,
+      porte,
+    );
 
-    async atualizaPet(req: Request, res: Response) {
+    await this.repository.criaPet(novoPet);
+    return res.status(201).json(novoPet);
+  }
+
+  async listaPet(req: Request, res: Response) {
+    const listaDePets = await this.repository.listaPet();
+    return res.status(200).json(listaDePets);
+  }
+
+  async atualizaPet(req: Request, res: Response) {
     const { id } = req.params;
     const { success, message } = await this.repository.atualizaPet(
-        Number(id),
-        req.body as PetEntity
+      Number(id),
+      req.body as PetEntity,
     );
 
     if (!success) {
-        return res.status(404).json({ message });
+      return res.status(404).json({ message });
     }
     return res.sendStatus(204);
-    }
+  }
 
-    async deletaPet(req: Request, res: Response) {
+  async deletaPet(req: Request, res: Response) {
     const { id } = req.params;
 
     const { success, message } = await this.repository.deletaPet(Number(id));
 
     if (!success) {
-        return res.status(404).json({ message });
+      return res.status(404).json({ message });
     }
     return res.sendStatus(204);
-    }
+  }
 
+  async adotaPet(req: Request, res: Response) {
+    const { pet_id, adotante_id } = req.params;
+
+    const { success, message } = await this.repository.adotaPet(
+      Number(pet_id),
+      Number(adotante_id),
+    );
+
+    if (!success) {
+      return res.status(404).json({ message });
+    }
+    return res.sendStatus(204);
+  }
+
+  async buscaPetPorCampoGenerico(req: Request, res: Response) {
+    const { campo, valor } = req.query;
+    const listaDePets = await this.repository.buscaPetPorCampoGenerico(
+      campo as keyof PetEntity,
+      valor as string,
+    );
+
+    return res.status(202).json(listaDePets);
+  }
 }
